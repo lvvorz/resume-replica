@@ -11,7 +11,9 @@
     "PNG 逐页导出",
     "Word 降级交付",
     "页数结构自检",
-    "预览对照自检"
+    "预览对照自检",
+    "颜色程序化采样",
+    "图标清单复刻"
   ],
   "dependencies": [
     {
@@ -89,7 +91,8 @@
       "capabilities": [
         "PDF 无头导出",
         "页数结构自检",
-        "PNG 逐页导出"
+        "PNG 逐页导出",
+        "颜色程序化采样"
       ],
       "checks": [
         {
@@ -141,6 +144,16 @@
           "limitations": "失去逐页高清渲染能力",
           "evidence_label": "部分验证",
           "recovery": "pip 安装 PyMuPDF 后恢复逐页渲染",
+          "stop_condition": "无"
+        },
+        {
+          "capability": "颜色程序化采样",
+          "trigger": "宿主 Python 无 Pillow",
+          "fallback": "手动取色降级路径（见 functional_degradations）",
+          "user_input": "无",
+          "limitations": "同功能级降级",
+          "evidence_label": "部分验证",
+          "recovery": "安装 Pillow 后恢复",
           "stop_condition": "无"
         }
       ]
@@ -350,6 +363,26 @@
       "limitations": "无自动转换，未实测",
       "evidence_label": "未验证",
       "recovery": "无",
+      "stop_condition": "无"
+    },
+    {
+      "capability": "颜色程序化采样",
+      "trigger": "宿主 Python 无 Pillow，sample_colors.py 无法运行",
+      "fallback": "按 layout-measurement.md 手动采样小节，用图像查看器取色器采样至少 3 类代表色，交付标注「手动采样」",
+      "user_input": "无",
+      "limitations": "采样精度依赖人工，类别可能不全",
+      "evidence_label": "部分验证",
+      "recovery": "pip 安装 Pillow 后重跑 sample_colors.py 核对",
+      "stop_condition": "无"
+    },
+    {
+      "capability": "图标清单复刻",
+      "trigger": "图标语义无法辨认或风格类别判断不了",
+      "fallback": "列出存疑图标请用户确认；确认不了的在交付说明标注「图标为近似形体」",
+      "user_input": "用户确认",
+      "limitations": "个别图标形体不保证一致",
+      "evidence_label": "部分验证",
+      "recovery": "用户说明后修正",
       "stop_condition": "无"
     }
   ]
