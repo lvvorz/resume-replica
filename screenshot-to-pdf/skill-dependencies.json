@@ -1,11 +1,15 @@
 {
   "schema_version": "1",
   "capabilities": [
+    "多截图去重合并",
+    "前置分析确认",
     "截图边界判断",
     "逐字内容提取",
     "版式像素测量",
     "HTML 高保真复刻",
     "PDF 无头导出",
+    "PNG 逐页导出",
+    "Word 降级交付",
     "页数结构自检",
     "预览对照自检"
   ],
@@ -17,7 +21,8 @@
       "auth_type": "none",
       "capabilities": [
         "PDF 无头导出",
-        "页数结构自检"
+        "页数结构自检",
+        "PNG 逐页导出"
       ],
       "checks": [
         {
@@ -63,6 +68,16 @@
           "evidence_label": "部分验证",
           "recovery": "换用 Chrome/Edge 重新导出后恢复自动扫描",
           "stop_condition": "无"
+        },
+        {
+          "capability": "PNG 逐页导出",
+          "trigger": "用户指定 PNG，宿主无 PyMuPDF，且文档为多页",
+          "fallback": "Chrome 截图仅产出首页 PNG 并标注「部分验证：仅首页」，建议改用 PDF 或安装 PyMuPDF 后重试",
+          "user_input": "无",
+          "limitations": "多页文档兜底路径只覆盖首页",
+          "evidence_label": "部分验证",
+          "recovery": "安装 PyMuPDF 后按 SKILL.md 正常路径渲染全部页面",
+          "stop_condition": "无"
         }
       ]
     },
@@ -73,7 +88,8 @@
       "auth_type": "none",
       "capabilities": [
         "PDF 无头导出",
-        "页数结构自检"
+        "页数结构自检",
+        "PNG 逐页导出"
       ],
       "checks": [
         {
@@ -116,6 +132,16 @@
           "evidence_label": "部分验证",
           "recovery": "恢复 Python 3.10+ 后重跑 export_pdf.py",
           "stop_condition": "无法手工导出时停止"
+        },
+        {
+          "capability": "PNG 逐页导出",
+          "trigger": "宿主 Python 环境无 PyMuPDF 库",
+          "fallback": "转用 Chrome 截图兜底路径（单页）或建议用户改用 PDF",
+          "user_input": "无",
+          "limitations": "失去逐页高清渲染能力",
+          "evidence_label": "部分验证",
+          "recovery": "pip 安装 PyMuPDF 后恢复逐页渲染",
+          "stop_condition": "无"
         }
       ]
     },
@@ -128,7 +154,9 @@
         "截图边界判断",
         "逐字内容提取",
         "版式像素测量",
-        "预览对照自检"
+        "预览对照自检",
+        "多截图去重合并",
+        "前置分析确认"
       ],
       "checks": [
         {
@@ -188,6 +216,26 @@
           "limitations": "视觉对照缺项，结论降级为部分验证",
           "evidence_label": "部分验证",
           "recovery": "条件恢复后重跑对应步骤",
+          "stop_condition": "无"
+        },
+        {
+          "capability": "多截图去重合并",
+          "trigger": "截图之间衔接关系无法判断（内容对不上或疑似混入其他文档）",
+          "fallback": "停下来列出对不上的截图请用户说明页序或剔除",
+          "user_input": "页序说明或补充截图",
+          "limitations": "确认前不产出合并稿",
+          "evidence_label": "已验证",
+          "recovery": "用户回复后继续",
+          "stop_condition": "用户无法说明时停止"
+        },
+        {
+          "capability": "前置分析确认",
+          "trigger": "用户长时间未确认或要求跳过确认",
+          "fallback": "按用户明确指示继续，交付说明标注「未经前置确认」",
+          "user_input": "用户明确指示",
+          "limitations": "缺少确认闸口，错误发现在交付后",
+          "evidence_label": "已验证",
+          "recovery": "无",
           "stop_condition": "无"
         }
       ]
@@ -262,6 +310,46 @@
       "limitations": "视觉对照缺项，质量结论降级为部分验证",
       "evidence_label": "未验证",
       "recovery": "环境可渲染预览后补做视觉对照",
+      "stop_condition": "无"
+    },
+    {
+      "capability": "多截图去重合并",
+      "trigger": "无法判断截图是否重复或页序",
+      "fallback": "列出疑问请用户确认，不猜",
+      "user_input": "用户说明",
+      "limitations": "确认前不生成",
+      "evidence_label": "已验证",
+      "recovery": "用户回复后继续",
+      "stop_condition": "无法确认时停止"
+    },
+    {
+      "capability": "前置分析确认",
+      "trigger": "用户跳过或放弃确认",
+      "fallback": "按指示继续并标注「未经前置确认」",
+      "user_input": "用户明确指示",
+      "limitations": "质量闸口失效风险",
+      "evidence_label": "已验证",
+      "recovery": "无",
+      "stop_condition": "无"
+    },
+    {
+      "capability": "PNG 逐页导出",
+      "trigger": "无 PyMuPDF 且文档多页",
+      "fallback": "首页截图兜底并标注部分验证，或改用 PDF",
+      "user_input": "无",
+      "limitations": "仅首页可用",
+      "evidence_label": "部分验证",
+      "recovery": "安装 PyMuPDF 后重试",
+      "stop_condition": "无"
+    },
+    {
+      "capability": "Word 降级交付",
+      "trigger": "用户指定 Word",
+      "fallback": "交付 HTML + Word 另存 .docx 手动指引",
+      "user_input": "无",
+      "limitations": "无自动转换，未实测",
+      "evidence_label": "未验证",
+      "recovery": "无",
       "stop_condition": "无"
     }
   ]
