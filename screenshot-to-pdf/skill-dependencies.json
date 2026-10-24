@@ -1,0 +1,268 @@
+{
+  "schema_version": "1",
+  "capabilities": [
+    "截图边界判断",
+    "逐字内容提取",
+    "版式像素测量",
+    "HTML 高保真复刻",
+    "PDF 无头导出",
+    "页数结构自检",
+    "预览对照自检"
+  ],
+  "dependencies": [
+    {
+      "id": "chromium-browser",
+      "type": "local-tool",
+      "required": true,
+      "auth_type": "none",
+      "capabilities": [
+        "PDF 无头导出",
+        "页数结构自检"
+      ],
+      "checks": [
+        {
+          "id": "env-check-script",
+          "type": "python",
+          "required": true,
+          "command": "python scripts/check_environment.py",
+          "min_version": "3.10"
+        }
+      ],
+      "setup": {
+        "official_home_url": "https://www.google.com/chrome/",
+        "official_docs_url": "https://www.microsoft.com/edge",
+        "download_url": "https://www.google.com/chrome/",
+        "steps": [
+          "优先检查本机是否已装 Chrome 或 Edge（Windows 通常预装 Edge）",
+          "未安装时从官方下载页安装其一",
+          "安装后运行 scripts/check_environment.py，输出 ready 即通过",
+          "浏览器已装但路径非常规时，用 --browser 参数把可执行文件绝对路径传给 check_environment.py 和 export_pdf.py"
+        ],
+        "verify": "运行 scripts/check_environment.py，status 为 ready 且返回浏览器路径",
+        "security": "浏览器以无头模式运行，使用独立临时用户数据目录，不读写用户浏览器配置，不涉及任何凭据",
+        "verified_at": "2026-10-24",
+        "applies_to_version": "Chrome / Edge 当前稳定版"
+      },
+      "degradation": [
+        {
+          "capability": "PDF 无头导出",
+          "trigger": "未找到任何 Chromium 内核浏览器且用户暂不安装",
+          "fallback": "交付 HTML 复刻稿，附浏览器手动打印步骤（打开 → 打印 → 另存为 PDF，A4、边距无）",
+          "user_input": "无，或用户选择安装浏览器后重试",
+          "limitations": "PDF 未由脚本生成，页数未经自动校验",
+          "evidence_label": "未验证",
+          "recovery": "安装 Chrome 或 Edge 后重跑 scripts/check_environment.py 与 export_pdf.py",
+          "stop_condition": "用户既不愿安装浏览器也不愿手动打印时，流程停止在 HTML 交付"
+        },
+        {
+          "capability": "页数结构自检",
+          "trigger": "浏览器可用但 PDF 页数结构扫描失败",
+          "fallback": "人工打开 PDF 核对页数，结论标注部分验证",
+          "user_input": "无",
+          "limitations": "页数为人工核对",
+          "evidence_label": "部分验证",
+          "recovery": "换用 Chrome/Edge 重新导出后恢复自动扫描",
+          "stop_condition": "无"
+        }
+      ]
+    },
+    {
+      "id": "python-runtime",
+      "type": "runtime",
+      "required": true,
+      "auth_type": "none",
+      "capabilities": [
+        "PDF 无头导出",
+        "页数结构自检"
+      ],
+      "checks": [
+        {
+          "id": "python-version",
+          "type": "python",
+          "required": true,
+          "command": "python",
+          "min_version": "3.10"
+        }
+      ],
+      "setup": {
+        "official_home_url": "https://www.python.org/",
+        "official_docs_url": "https://docs.python.org/3/",
+        "steps": [
+          "WorkBuddy 宿主自带 Python 3.10+ 时无需任何操作",
+          "独立运行脚本时从官方下载页安装 Python 3.10 及以上版本"
+        ],
+        "verify": "python --version 显示 3.10 或更高",
+        "security": "脚本仅使用 Python 标准库，不涉及凭据与网络",
+        "verified_at": "2026-10-24",
+        "applies_to_version": "Python 3.10+"
+      },
+      "degradation": [
+        {
+          "capability": "页数结构自检",
+          "trigger": "Python 不可用或版本低于 3.10",
+          "fallback": "改用浏览器导出后人工打开 PDF 核对页数",
+          "user_input": "无",
+          "limitations": "失去自动页数校验，自检结论标注为部分验证",
+          "evidence_label": "部分验证",
+          "recovery": "恢复 Python 3.10+ 后重跑 scripts/export_pdf.py",
+          "stop_condition": "无 Python 且无法人工核对时停止"
+        },
+        {
+          "capability": "PDF 无头导出",
+          "trigger": "Python 不可用或版本过低，导出脚本无法运行",
+          "fallback": "手工执行同等参数的浏览器无头打印命令导出 PDF",
+          "user_input": "无",
+          "limitations": "失去脚本封装与自动校验",
+          "evidence_label": "部分验证",
+          "recovery": "恢复 Python 3.10+ 后重跑 export_pdf.py",
+          "stop_condition": "无法手工导出时停止"
+        }
+      ]
+    },
+    {
+      "id": "screenshot-reading",
+      "type": "model",
+      "required": true,
+      "auth_type": "none",
+      "capabilities": [
+        "截图边界判断",
+        "逐字内容提取",
+        "版式像素测量",
+        "预览对照自检"
+      ],
+      "checks": [
+        {
+          "id": "multimodal-available",
+          "type": "python",
+          "required": true,
+          "command": "python scripts/check_environment.py"
+        }
+      ],
+      "setup": {
+        "official_home_url": "https://www.workbuddy.cn/docs/workbuddy/Overview",
+        "official_docs_url": "https://www.workbuddy.cn/docs/workbuddy/Overview",
+        "steps": [
+          "无需配置：会话中用户成功发送图片即表明多模态读取可用"
+        ],
+        "verify": "用户发送一张测试截图，助手能描述图中文字与布局",
+        "security": "截图仅在本会话内读取用于复刻，不外发、不存储凭据",
+        "verified_at": "2026-10-24",
+        "applies_to_version": "WorkBuddy 当前版本"
+      },
+      "degradation": [
+        {
+          "capability": "逐字内容提取",
+          "trigger": "截图分辨率过低，关键文字无法可靠辨认",
+          "fallback": "停止复刻，列出无法辨认的区域请用户补充更清晰截图",
+          "user_input": "更清晰的截图",
+          "limitations": "无降级：辨认不出就不能复刻，不凭猜测补齐",
+          "evidence_label": "已验证",
+          "recovery": "用户补图后继续流程",
+          "stop_condition": "用户无法提供更清晰截图时流程停止"
+        },
+        {
+          "capability": "截图边界判断",
+          "trigger": "截图被遮挡或边界不清",
+          "fallback": "向用户确认文档范围后再复刻",
+          "user_input": "无",
+          "limitations": "确认前不产出复刻稿",
+          "evidence_label": "部分验证",
+          "recovery": "条件恢复后重跑对应步骤",
+          "stop_condition": "无"
+        },
+        {
+          "capability": "版式像素测量",
+          "trigger": "截图分辨率过低或文档区域被裁切",
+          "fallback": "按可量部分测量，其余按常规值设定并标注",
+          "user_input": "无",
+          "limitations": "部分间距为推断值",
+          "evidence_label": "部分验证",
+          "recovery": "条件恢复后重跑对应步骤",
+          "stop_condition": "无"
+        },
+        {
+          "capability": "预览对照自检",
+          "trigger": "宿主环境无法渲染 PDF 预览图",
+          "fallback": "改用逐字比对与结构清单核对",
+          "user_input": "无",
+          "limitations": "视觉对照缺项，结论降级为部分验证",
+          "evidence_label": "部分验证",
+          "recovery": "条件恢复后重跑对应步骤",
+          "stop_condition": "无"
+        }
+      ]
+    }
+  ],
+  "functional_degradations": [
+    {
+      "capability": "截图边界判断",
+      "trigger": "截图被其他窗口遮挡或文档边界不清晰",
+      "fallback": "向用户确认文档范围后再复刻，不自行猜测",
+      "user_input": "文档本体的范围说明或重新截图",
+      "limitations": "确认前不产出复刻稿",
+      "evidence_label": "已验证",
+      "recovery": "用户回复边界后继续",
+      "stop_condition": "用户无法说明边界时停止"
+    },
+    {
+      "capability": "逐字内容提取",
+      "trigger": "截图模糊或文字被压缩到无法可靠辨认",
+      "fallback": "只提取可辨认部分，列出缺失清单请用户补图",
+      "user_input": "更清晰的截图",
+      "limitations": "缺失内容不复刻、不编造",
+      "evidence_label": "已验证",
+      "recovery": "用户补图后补齐",
+      "stop_condition": "用户无法补图且不接受缺失标注时停止"
+    },
+    {
+      "capability": "版式像素测量",
+      "trigger": "截图分辨率过低或文档区域被裁切，像素比例失真",
+      "fallback": "按可量部分测量，其余按最接近的常规值设定并在交付说明标注",
+      "user_input": "无",
+      "limitations": "被裁切区域的间距为推断值，非测量值",
+      "evidence_label": "部分验证",
+      "recovery": "用户补全截图后重新测量",
+      "stop_condition": "关键版式无法测量且用户无法补图时停止"
+    },
+    {
+      "capability": "HTML 高保真复刻",
+      "trigger": "原文档含复杂图片、印章、渐变图形等无法矢量化还原的元素",
+      "fallback": "用色块或最接近的矢量图形替代，并在交付说明的差异清单中列出",
+      "user_input": "无",
+      "limitations": "复杂图像为视觉近似，非原图",
+      "evidence_label": "部分验证",
+      "recovery": "用户提供原图素材后可嵌入还原",
+      "stop_condition": "无"
+    },
+    {
+      "capability": "PDF 无头导出",
+      "trigger": "未找到 Chromium 内核浏览器",
+      "fallback": "交付 HTML 复刻稿，附手动打印为 PDF 的步骤",
+      "user_input": "无，或用户安装浏览器",
+      "limitations": "PDF 未由脚本生成，页数未自动验证",
+      "evidence_label": "未验证",
+      "recovery": "安装 Chrome/Edge 后重跑导出脚本",
+      "stop_condition": "用户拒绝手动打印时停止"
+    },
+    {
+      "capability": "页数结构自检",
+      "trigger": "PDF 页数扫描失败或结果与原版不符",
+      "fallback": "渲染预览人工核对页数；不符时按压缩顺序逐档回调间距重新导出",
+      "user_input": "无",
+      "limitations": "页数核对为人工完成时标注部分验证",
+      "evidence_label": "部分验证",
+      "recovery": "页数一致后恢复自动校验",
+      "stop_condition": "页数始终无法与原版一致时如实交付并标注差异"
+    },
+    {
+      "capability": "预览对照自检",
+      "trigger": "宿主环境无法把 PDF 渲染为预览图",
+      "fallback": "改用逐字比对与结构清单核对，无法视觉对照的区域标注未验证",
+      "user_input": "无",
+      "limitations": "视觉对照缺项，质量结论降级为部分验证",
+      "evidence_label": "未验证",
+      "recovery": "环境可渲染预览后补做视觉对照",
+      "stop_condition": "无"
+    }
+  ]
+}
