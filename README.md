@@ -11,16 +11,18 @@
 - **截图边界判断**：自动排除截图带入的浏览器边框、桌面背景等无关元素，只复刻文档本体
 - **逐字内容提取**：文字逐字照抄，不润色不编造；截图缺失或模糊时明确指出，不用猜测补齐
 - **版式像素测量**：字号、间距、对齐、配色按截图像素比例换算
+- **颜色程序化采样**：带彩色标签/图标/进度条的文档强制跑采样脚本填色，禁止肉眼估色；交付附「原版采样值 vs 复刻值」颜色对照表（简单黑白文档自动跳过，不增加耗时）
+- **图标复刻规范**：先枚举图标语义清单再画，风格（线性/实心）跟随原版，颜色用采样值，装饰元素位置按页面百分比记录
 - **HTML 高保真复刻**：单文件 HTML + 内联 CSS，字体用最接近的系统字体替代
 - **输出格式可选**：默认 PDF（无头打印 + 自动页数校验），可选 PNG 逐页导出、Word（降级交付）
 - **去水印**：平台加在文档页面上的水印属于非文档元素，复刻时直接去除
 
 ## 安装
 
-把 `screenshot-to-pdf/` 文件夹整个复制到 WorkBuddy 的用户级技能目录：
+把 `resume-replica/` 文件夹整个复制到 WorkBuddy 的用户级技能目录：
 
 ```text
-~/.workbuddy/skills/screenshot-to-pdf/
+~/.workbuddy/skills/resume-replica/
 ```
 
 重启会话即可。之后发一张文档截图，说"复刻这份截图"、"截图转 PDF"、"照这个版式重做"即可触发。
@@ -30,20 +32,21 @@
 | 依赖 | 要求 | 说明 |
 |---|---|---|
 | Chrome / Edge | 任装其一 | 无头打印导出 PDF；未安装时自动降级为交付 HTML + 手动打印步骤 |
-| Python | 3.10+ | 脚本只用标准库，无需 pip 安装任何包 |
+| Python | 3.10+ | 导出/环境检查脚本只用标准库；颜色采样脚本需要 Pillow（未安装时自动降级为手动取色） |
 | 多模态读图 | WorkBuddy 宿主自带 | 无需配置 |
 
 ## 目录结构
 
 ```text
-screenshot-to-pdf/
+resume-replica/
 ├── SKILL.md                        # 触发条件、铁律、完整流程
 ├── skill-dependencies.json         # 依赖与功能级降级映射
 ├── scripts/
 │   ├── check_environment.py        # 浏览器环境只读检查
-│   └── export_pdf.py               # HTML → PDF 导出 + 页数校验
+│   ├── export_pdf.py               # HTML → PDF 导出 + 页数校验
+│   └── sample_colors.py            # 截图颜色程序化采样（完整档强制）
 └── references/
-    ├── layout-measurement.md       # 边界判断与版式测量方法
+    ├── layout-measurement.md       # 边界判断、分档、颜色采样与图标复刻规范
     └── setup-guide.md              # 环境配置与故障处理
 ```
 
@@ -55,4 +58,4 @@ screenshot-to-pdf/
 
 ## 版本
 
-1.1.0 — 新增多截图去重合并、前置分析确认闸口、PNG/Word 输出选项
+当前 1.1.1（更名 resume-replica；颜色程序化采样、图标复刻规范、复杂度分档）。历史版本见 [Releases](https://github.com/lvvorz/resume-replica/releases)。
